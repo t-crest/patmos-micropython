@@ -41,13 +41,22 @@ OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 # Define the top-level target, the main firmware.
 all: removeBuild $(BUILD)/firmware.elf
 
+quick: $(BUILD)/firmware.elf
+
+# Compile all .py files
+mpy:
+	$(foreach var, $(wildcard py/*.py), ./$(TOP)/mpy-cross/build/mpy-cross $(var);)
+
 # Frozen bytecode
-$(BUILD)/_frozen_mpy.c: $(TOP)/tests/frozen/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
+$(BUILD)/_frozen_mpy.c: py/frozen.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
+#	$(ECHO) "MPY files are (arg)" $<
+#	$(ECHO) "MPY files are (wlc)" $(wildcard py/*.mpy)
+	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $(wildcard py/*.mpy) > $@
+
 
 removeBuild:
-	@rm -r build/
+	@rm -rf build/
 
 # Run emulation build on a POSIX system with suitable terminal settings
 run:

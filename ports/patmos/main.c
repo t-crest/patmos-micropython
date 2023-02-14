@@ -39,10 +39,12 @@ int main(int argc, char **argv) {
     gc_init(heap, heap + sizeof(heap));
 #endif
     mp_init();
-    mp_hal_stdout_tx_strn("Hey\n", 4);
 //    pyexec_friendly_repl();
 #if MICROPY_MODULE_FROZEN_MPY
-    pyexec_frozen_module("frozentest.py");
+    mp_hal_stdout_tx_strn("Running frozen.py:\n", 19);
+    pyexec_frozen_module("py/frozen.py");
+    mp_hal_stdout_tx_strn("Running frozen2.py:\n", 20);
+    pyexec_frozen_module("py/frozen2.py");
 #endif
     //printf("%s\n", "Running");
     // Start a normal REPL; will exit when ctrl-D is entered on a blank line.

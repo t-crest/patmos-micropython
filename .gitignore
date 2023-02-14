@@ -11,6 +11,9 @@ build/
 build-*/
 docs/genrst/
 
+# frozen python files
+*.mpy
+
 # Test failure outputs
 tests/results/*
 

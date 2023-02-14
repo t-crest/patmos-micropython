@@ -5,6 +5,8 @@ include ../../py/mkenv.mk
 include $(TOP)/py/py.mk
 #include $(TOP)/extmod/extmod.mk
 
+FROZEN ?= 1
+
 # Set CFLAGS and libraries.
 CFLAGS += -I. -I$(BUILD) -I$(TOP)
 CFLAGS += -Os -DNDEBUG
@@ -21,26 +23,31 @@ SRC_C = \
     shared/runtime/stdout_helpers.c \
     shared/runtime/pyexec.c \
     shared/readline/readline.c \
-    $(BUILD)/_frozen_mpy.c \
 #    shared/runtime/gchelper_generic.c \
 #    mphalport.c \
 #    shared/libc/printf.c \
 
-#include troll.mk
 
 SRC_QSTR += shared/readline/readline.c shared/runtime/pyexec.c
 #SRC_QSTR += shared/runtime/pyexec.c
+
+ifeq ($(FROZEN), 1)
+	SRC_C += $(BUILD)/_frozen_mpy.c
+endif
 
 # Define the required object files.
 OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
 # Define the top-level target, the main firmware.
-all: $(BUILD)/firmware.elf
+all: removeBuild $(BUILD)/firmware.elf
 
 # Frozen bytecode
 $(BUILD)/_frozen_mpy.c: $(TOP)/tests/frozen/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
 	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
+
+removeBuild:
+	@rm -r build/
 
 # Run emulation build on a POSIX system with suitable terminal settings
 run:
@@ -60,8 +67,13 @@ patmosRun:
 # Define how to build the firmware.
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	@if [ $(FROZEN) = 1 ]; then \
+		./patmosFrozen.sh; \
+	else \
+		./patmosRepl.sh; \
+	fi
 	$(Q)$(SIZE) $@
+#	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 # Include remaining core make rules.
 include $(TOP)/py/mkrules.mk

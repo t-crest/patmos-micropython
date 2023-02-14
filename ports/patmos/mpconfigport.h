@@ -4,18 +4,16 @@
 
 
 #define MICROPY_ENABLE_GC                       (0)
-#define MICROPY_HELPER_REPL                     (0)
 #define MICROPY_ENABLE_FINALISER    		(0)
 #define MICROPY_STACK_CHECK         		(0)
+#define MICROPY_HELPER_REPL                     (0)
 
 
 //Frozen pycode
-
+#if MICROPY_HELPER_REPL==0
 #define MICROPY_MODULE_FROZEN_MPY         	(1)
-
-#if MICROPY_MODULE_FROZEN_MPY
 #define MICROPY_ENABLE_EXTERNAL_IMPORT    	(1)
-#define MICROPY_QSTR_EXTRA_POOL           mp_qstr_frozen_const_pool
+#define MICROPY_QSTR_EXTRA_POOL           	mp_qstr_frozen_const_pool
 #endif
 
 //#define MICROPY_ERROR_REPORTING                 (MICROPY_ERROR_REPORTING_TERSE)

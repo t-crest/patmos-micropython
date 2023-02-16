@@ -37,9 +37,11 @@ endif
 
 # Define the required object files.
 OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+PART_FILES = $(addprefix $(TOP)/, $(subst .o,.c,$(PY_CORE_O_BASENAME))) $(SRC_C)
+FILES = $(subst shared,$(TOP)/shared,$(PART_FILES))
 
 # Define the top-level target, the main firmware.
-all: removeBuild $(BUILD)/firmware.elf
+all: clean $(BUILD)/firmware.elf
 
 quick: $(BUILD)/firmware.elf
 
@@ -50,13 +52,7 @@ mpy:
 # Frozen bytecode
 $(BUILD)/_frozen_mpy.c: py/frozen.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
-#	$(ECHO) "MPY files are (arg)" $<
-#	$(ECHO) "MPY files are (wlc)" $(wildcard py/*.mpy)
 	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $(wildcard py/*.mpy) > $@
-
-
-removeBuild:
-	@rm -rf build/
 
 # Run emulation build on a POSIX system with suitable terminal settings
 run:
@@ -74,13 +70,10 @@ patmosRun:
           stty $$saved_
 
 # Define how to build the firmware.
-$(BUILD)/firmware.elf: $(OBJ)
+#$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/firmware.elf: $(HEADER_BUILD)/qstrdefs.generated.h $(HEADER_BUILD)/mpversion.h $(HEADER_BUILD)/moduledefs.h $(HEADER_BUILD)/root_pointers.h $(BUILD)/_frozen_mpy.c
 	$(ECHO) "LINK $@"
-	@if [ $(FROZEN) = 1 ]; then \
-		./patmosFrozen.sh; \
-	else \
-		./patmosRepl.sh; \
-	fi
+	$(Q)$(CC) $(CFLAGS) $(FILES) -o $@
 	$(Q)$(SIZE) $@
 #	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
